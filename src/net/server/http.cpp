@@ -13,8 +13,11 @@
 
 #include <sstream>
 
+#include "AppAddress.h"
+#include "AppAddressKeys.h"
+
 // Kommt aus main.cpp
-extern Persistence persistence;
+extern mm::Persistence persistence;
 
 namespace mm {
     namespace net {
@@ -90,9 +93,9 @@ namespace mm {
             root["project"]["version"] = String(Project_VERSION.c_str());
 
             root["config"]["version"] = String(Project_Config_VERSION);
-            root["config"]["useSensor1"] = persistence.get(Persistence::Address::useSensor1) != 0;
-            root["config"]["useSensor2"] = persistence.get(Persistence::Address::useSensor2) != 0;
-            root["config"]["reactOnSensor"] = persistence.get(Persistence::Address::reactOnSensor) != 0;
+            root["config"]["useSensor1"] = persistence.get(AppAddressKey::useSensor1, true);
+            root["config"]["useSensor2"] = persistence.get(AppAddressKey::useSensor2, true);
+            root["config"]["reactOnSensor"] = persistence.get(AppAddressKey::reactOnSensor, true);
 
             serializeJson(root, message);
 
@@ -123,7 +126,11 @@ namespace mm {
                     } else if(valueAsString.equalsIgnoreCase("false") || valueAsString.equalsIgnoreCase("no")){
                         value = 0;
                     }
-                    persistence.set(std::string(name.c_str()), value);
+                    auto mayBeKey = AppAddress::nameToKey(std::string(name.c_str()));
+                    if(mayBeKey.has_value()) {
+                        const AppAddress address(mayBeKey.value());
+                        persistence.set(address, value);
+                    }
                 }
             }
 

@@ -1,7 +1,9 @@
 #pragma once
 
+// 3. Eigene dependencies ----------------------------------------
+#include <Persistence.h>
+
 // 4. Fremdbibliothek --------------------------------------------
-#include <Preferences.h>
 
 // 5. System-/Standardbibliothek ---------------------------------
 #include <string>
@@ -29,6 +31,10 @@ namespace mm::net {
 
     class CredentialManager {
     public:
+        explicit CredentialManager(Persistence& persistenceRef)
+            : persistence(persistenceRef) {
+        }
+
         void addCredential(const std::string& user, const std::string& pass);
 
         void loadState();
@@ -39,9 +45,8 @@ namespace mm::net {
 
     private:
         std::vector<Credential> credentials;
-        Preferences prefs;
+        Persistence& persistence;
         std::string lastSuccessfulUser;
     };
-
 
 }

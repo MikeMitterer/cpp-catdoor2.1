@@ -30,8 +30,9 @@
 #include "Display.h"
 #include "ota.h"
 #include "ServiceLocator.h"
-#include "Persistence.h"
 #include "TopTicker.h"
+#include "AppAddress.h"
+#include "AppAddressKeys.h"
 
 // 2. Projektinterner Header -------------------------------------
 #include "net/server/http.h"
@@ -42,6 +43,7 @@
 
 // 3. Eigene dependencies ----------------------------------------
 #include "OneLED.h"
+#include <Persistence.h>
 
 // 4. Fremdbibliothek --------------------------------------------
 #include <ArduinoJson.h>
@@ -56,7 +58,6 @@
 
 using namespace std::placeholders;
 using namespace mm;
-using namespace mm::net;
 
 Display display;
 void refreshDisplay();
@@ -85,11 +86,19 @@ bool extDoorTrigger = false;
 
 State prevAppState = State::Idle;
 
-CredentialManager credManager;
+net::CredentialManager credManager(persistence);
 
 void setup() {
     Serial.begin(115200);
     Log.begin(LOG_LEVEL_NOTICE, &Serial);
+
+    persistence.setDefault(AppAddressKey::useSensor1, true);
+    persistence.setDefault(AppAddressKey::useSensor2, true);
+    persistence.setDefault(AppAddressKey::reactOnSensor, true);
+
+    persistence.setUpgradeCallback([](uint8_t from, uint8_t to) {
+        // eigene Logik bei Versionswechsel
+    });
 
     persistence.init(Project_Config_VERSION);
 
@@ -97,7 +106,7 @@ void setup() {
     credManager.addCredential(Project_SSID_2, Project_PASSWORD_2);
     credManager.addCredential(Project_SSID_3, Project_PASSWORD_3);
 
-    // Laden der letzen erfolgreichen Credentials
+    // Laden der letzten erfolgreichen Credentials
     credManager.loadState();
 
     // App wird initialisiert
@@ -142,6 +151,7 @@ void setup() {
             net::initWifi(credential.getSSID(),credential.getPassword(), ledWIFI);
             credManager.markSuccess(credential);
             success = true;
+            break;
 
         } catch(const ConnectionFailed& e) {
 
@@ -176,7 +186,7 @@ void setup() {
     net::server.addHandler(&net::events);
 
     // Catch-All Handlers
-    // Any request that can not find a Handler that canHandle it
+    // Any request that cannot find a Handler that canHandle it
     // ends in the callbacks below.
     net::server.onNotFound(net::onRequest);
     net::server.onFileUpload(net::onUpload);
@@ -211,6 +221,9 @@ void setup() {
     // Run Server
     net::server.begin();
 
+    // Save aller Settings
+    persistence.commit();
+
     // display.clear(Display::Page::one);
     // Serial.println("Ready!");
 }
@@ -243,9 +256,9 @@ void loop() {
 
         lastRefresh = millis();
 
-        const bool useSensor1 = persistence.get(Persistence::Address::useSensor1);
-        const bool useSensor2 = persistence.get(Persistence::Address::useSensor2);
-        const bool reactOnSensor = persistence.get(Persistence::Address::reactOnSensor);
+        const bool useSensor1 = persistence.get(AppAddressKey::useSensor1, true);
+        const bool useSensor2 = persistence.get(AppAddressKey::useSensor2, true);
+        const bool reactOnSensor = persistence.get(AppAddressKey::reactOnSensor, true);
 
         if(nextSensorToRefresh == 1) {
             nextSensorToRefresh = 2;

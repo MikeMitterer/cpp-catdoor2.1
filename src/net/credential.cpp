@@ -4,6 +4,8 @@
 
 #include "credential.h"
 
+#include "AppAddress.h"
+
 namespace mm::net {
 
     void CredentialManager::addCredential(const std::string& user, const std::string& pass) {
@@ -11,16 +13,16 @@ namespace mm::net {
     }
 
     void CredentialManager::loadState() {
-        prefs.begin("login-data", true);
-        lastSuccessfulUser = prefs.getString("last_user", "").c_str();
-        prefs.end();
+        const auto tempUser = persistence.get(AppAddress(AppAddress::Key::lastSSID),"<undefined>").c_str();
+
+        if (tempUser != "<undefined>") {
+            lastSuccessfulUser = tempUser;
+        }
     }
 
     void CredentialManager::markSuccess(const Credential& cred) {
         lastSuccessfulUser = cred.getSSID();
-        prefs.begin("login-data", false);
-        prefs.putString("last_user", lastSuccessfulUser.c_str());
-        prefs.end();
+        persistence.set(AppAddress(AppAddress::Key::lastSSID), lastSuccessfulUser.c_str());
     }
 
     std::vector<Credential> CredentialManager::getOrderedCredentials() const {
