@@ -43,10 +43,13 @@ namespace mm::net {
 
         std::vector<Credential> getOrderedCredentials() const;
 
+        // Getter für die zuletzt erfolgreiche SSID
+        const std::string& getLastSuccessfulSSID() const { return lastSuccessfulSSID; }
+
     private:
         std::vector<Credential> credentials;
         Persistence& persistence;
-        std::string lastSuccessfulUser;
+        std::string lastSuccessfulSSID;
     };
 
 }

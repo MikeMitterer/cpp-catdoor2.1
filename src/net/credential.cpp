@@ -16,13 +16,13 @@ namespace mm::net {
         const auto tempUser = persistence.get(AppAddress(AppAddress::Key::lastSSID),"<undefined>").c_str();
 
         if (tempUser != "<undefined>") {
-            lastSuccessfulUser = tempUser;
+            lastSuccessfulSSID = tempUser;
         }
     }
 
     void CredentialManager::markSuccess(const Credential& cred) {
-        lastSuccessfulUser = cred.getSSID();
-        persistence.set(AppAddress(AppAddress::Key::lastSSID), lastSuccessfulUser.c_str());
+        lastSuccessfulSSID = cred.getSSID();
+        persistence.set(AppAddress(AppAddress::Key::lastSSID), lastSuccessfulSSID.c_str());
     }
 
     std::vector<Credential> CredentialManager::getOrderedCredentials() const {
@@ -30,14 +30,14 @@ namespace mm::net {
 
         // zuerst der zuletzt erfolgreiche (falls vorhanden)
         for (const auto& cred: credentials) {
-            if (cred.ssid == lastSuccessfulUser) {
+            if (cred.ssid == lastSuccessfulSSID) {
                 result.push_back(cred);
                 break;
             }
         }
         // dann alle anderen
         for (const auto& cred: credentials) {
-            if (cred.ssid != lastSuccessfulUser) {
+            if (cred.ssid != lastSuccessfulSSID) {
                 result.push_back(cred);
             }
         }

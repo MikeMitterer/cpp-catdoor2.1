@@ -155,7 +155,7 @@ void setup() {
 
         } catch(const ConnectionFailed& e) {
 
-            Log.error(e.what());
+            Log.error("%s" CR, e.what());
             delay(2000);
         }
 
@@ -171,6 +171,7 @@ void setup() {
     }
 
     digitalWrite(pinInternalLED, LOW);
+    Log.notice("Connected to WIFI, %s" CR, credManager.getLastSuccessfulSSID().c_str());
     Log.notice(CR "IP: %s" CR, WiFi.localIP().toString().c_str());
 
     showAppInfo(display,Project_NAME, Project_VERSION);
